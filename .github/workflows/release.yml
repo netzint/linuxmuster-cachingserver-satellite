@@ -22,11 +22,14 @@ jobs:
       - name: Build
         run: ./buildpackage.sh
 
+      - name: Copy artifacts
+        run: mkdir archives && cp ../*.* ./archives
+
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: deb-packages
-          path: artifacts/*
+          path: archives/*
         
   github-release:
     needs: deb-package
