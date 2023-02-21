@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    install|configure)
+        exampleConfig="/etc/linuxmuster-cachingserver/config.json.example"
+        realConfig="/etc/linuxmuster-cachingserver/config.json"
+
+        if [ ! -f $realConfig ]; then
+            cp $exampleConfig $realConfig
+        fi
+        exit 0
+        ;;
+    upgrade|abort-upgrade)
+        echo "No work to do..."
+        exit 0
+        ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 0
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0
