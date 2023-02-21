@@ -20,7 +20,7 @@ jobs:
         run: sudo apt update && sudo apt install debhelper -y
 
       - name: Build
-        run: ./buildall.sh
+        run: ./buildpackage.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
