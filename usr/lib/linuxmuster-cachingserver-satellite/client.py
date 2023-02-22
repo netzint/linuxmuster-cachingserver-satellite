@@ -51,7 +51,7 @@ def authenticate(client, config):
         error(f"Authentification failed! Connection to {client.getpeername()[0]} is not possible!")
 
     logging.info("Authentification successful!")
-
+    
 def get(client, actions):
     sendMessage(client, "get " + actions)
     if receiveMessage(client) != "ok":
@@ -88,9 +88,12 @@ def get(client, actions):
             error("To many invalid messages. Maybe server is not responding anymore...?")
 
 
-def main(ip, port):
+def main():
+    config = getConfig()
+    ip = config["server_ip"]
+    port = config["server_port"]
     client = connect(ip, port)
-    authenticate(client, getConfig())
+    authenticate(client, config)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", nargs="+", required=True, help="List items to sync")
@@ -104,5 +107,5 @@ def main(ip, port):
     
 
 if __name__ == "__main__":
-    main("10.0.0.1", 4455)
+    main()
 

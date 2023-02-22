@@ -1,3 +1,9 @@
+linuxmuster-cachingserver-satellite (1.0.1-0) lmn72-testing; urgency=low
+
+  * add depency to isc-dhcp-server
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Tue, 22 Feb 2023 17:28:00 +0200
+
 linuxmuster-cachingserver-satellite (1.0.0-0) lmn72-testing; urgency=low
 
   * initial upload
