@@ -6,6 +6,6 @@ Build-Depends: debhelper (>= 4.0.0), fakeroot
 
 Package: linuxmuster-cachingserver-satellite
 Architecture: all
-Depends: linuxmuster-cachingserver-linbo7 isc-dhcp-server
+Depends: linuxmuster-cachingserver-linbo7, isc-dhcp-server
 Homepage: www.netzint.de
 Description: offical Netzint device manager addon for linuxmuster.net v7.x webui
