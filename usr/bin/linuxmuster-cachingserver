@@ -39,8 +39,8 @@ def setup(name, ip, gateway, school, key, serverip, serverport, servername, serv
         file_dhcpd = file_dhcpd.replace("@@satellitegateway@@", gateway)
         file_dhcpd = file_dhcpd.replace("@@satelliteip@@", ip)
 
-        file_dhcpd_devices = file_dhcpd.replace("@@school@@", school)
-        file_dhcpd_devices_school = file_dhcpd.replace("@@school@@", school)
+        file_dhcpd_devices = file_dhcpd_devices.replace("@@school@@", school)
+        file_dhcpd_devices_school = file_dhcpd_devices_school.replace("@@school@@", school)
 
         file = "/etc/dhcp/dhcpd.conf"
         with open(file, "w") as f:
