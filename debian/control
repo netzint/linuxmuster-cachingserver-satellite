@@ -8,4 +8,4 @@ Package: linuxmuster-cachingserver-satellite
 Architecture: all
 Depends: linuxmuster-cachingserver-linbo7, isc-dhcp-server
 Homepage: www.netzint.de
-Description: offical Netzint device manager addon for linuxmuster.net v7.x webui
+Description: Linuxmuster Cachingserver for Satellite-Server

@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+
+#########################################################
+# 
+# by Netzint GmbH 2023
+# Lukas Spitznagel (lukas.spitznagel@netzint.de)
+# 
+#########################################################
+
+import argparse
+import json
+import os
+
+def setup(name, ip, gateway, school, key, serverip, serverport, servername, serverdomain):
+    try:
+        with open("/etc/linuxmuster-cachingserver/config.json", "w") as file:
+            json.dump({
+                "name": name,
+                "ip": ip,
+                "gateway": gateway,
+                "school": school,
+                "key": key,
+                "server_ip": serverip,
+                "server_port": int(serverport),
+                "server_name": servername,
+                "server_domain": serverdomain,
+            }, file, indent=4)
+
+        # copy dhcp templates here
+        file_dhcpd = open("/usr/share/linuxmuster-cachingserver-satellite/templates/dhcpd.conf").read()
+        file_dhcpd_subnets = open("/usr/share/linuxmuster-cachingserver-satellite/templates/dhcpd-subnets.conf").read()
+        file_dhcpd_devices = open("/usr/share/linuxmuster-cachingserver-satellite/templates/dhcpd-devices.conf").read()
+        file_dhcpd_devices_school = open("/usr/share/linuxmuster-cachingserver-satellite/templates/dhcpd-devices-school.conf").read()
+        file_dhcpd_custom = open("/usr/share/linuxmuster-cachingserver-satellite/templates/dhcpd-custom.conf").read()
+
+        file_dhcpd = file_dhcpd.replace("@@servername@@", servername)
+        file_dhcpd = file_dhcpd.replace("@@domainname@@", serverdomain)
+        file_dhcpd = file_dhcpd.replace("@@serverip@@", serverip)
+        file_dhcpd = file_dhcpd.replace("@@satellitegateway@@", gateway)
+        file_dhcpd = file_dhcpd.replace("@@satelliteip@@", ip)
+
+        file_dhcpd_devices = file_dhcpd.replace("@@school@@", school)
+        file_dhcpd_devices_school = file_dhcpd.replace("@@school@@", school)
+
+        file = "/etc/dhcp/dhcpd.conf"
+        with open(file, "w") as f:
+            f.write(file_dhcpd)
+
+        file = "/etc/dhcp/subnets.conf"
+        if not os.path.exists(file):
+            with open(file, "w") as f:
+                f.write(file_dhcpd_subnets)
+
+        file = "/etc/dhcp/devices.conf"
+        with open(file, "w") as f:
+            f.write(file_dhcpd_devices)
+
+        file = "/etc/dhcp/devices/" + school + ".conf"
+        if not os.path.exists(file):
+            with open(file, "w") as f:
+                f.write(file_dhcpd_devices_school)
+
+        file = "/etc/dhcp/custom.conf"
+        if not os.path.exists(file):
+            with open(file, "w") as f:
+                f.write(file_dhcpd_custom)
+
+        return { "status": True, "message": "Config applied successfully!" }
+    except Exception as e:
+        return { "status": False, "message": "Failed to apply config! Error: " + str(e) }
+
+
+def output(text, printjson=False):
+    if printjson:
+        print(json.dumps(text))
+    else:
+        status = "SUCCESS" if text["status"] else "ERROR"
+        print("[%s] %s" % (status, text["message"]))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", required=False, help="Print debug output", action="store_true")
+    parser.add_argument("--json", required=False, help="Print output as json", action="store_true")
+
+    subparsers = parser.add_subparsers(dest="command")
+    parserSetup = subparsers.add_parser("setup", help="Setup a caching server")
+    parserSetup.add_argument("--name", required=True, help='Name of the cachingserver (hostname)')
+    parserSetup.add_argument("--ip", required=True, help='IP of the cachingserver')
+    parserSetup.add_argument("--gateway", required=True, help='Gateway of the cachingserver')
+    parserSetup.add_argument("--school", required=True, help='School for the cachingserver')
+    parserSetup.add_argument("--key", required=True, help='Key for the cachingserver')
+    parserSetup.add_argument("--serverip", required=True, help='IP of the main server')
+    parserSetup.add_argument("--serverport", required=True, help='Port on the main server')
+    parserSetup.add_argument("--servername", required=True, help='Name on the main server')
+    parserSetup.add_argument("--serverdomain", required=True, help='Domain on the main server')
+
+    parserStatus = subparsers.add_parser("status", help="Status of caching server(s)")
+    parserStatus.add_argument("-n", "--name", required=False, help='Name of the cachingserver (hostname)')
+    
+    args = parser.parse_args()
+
+    if not args.json:
+        print("""
+=======================================================================
+    _     ___ _   _ _   ___  ____  __ _   _ ____ _____ _____ ____  
+   | |   |_ _| \ | | | | \ \/ /  \/  | | | / ___|_   _| ____|  _ \ 
+   | |    | ||  \| | | | |\  /| |\/| | | | \___ \ | | |  _| | |_) |
+   | |___ | || |\  | |_| |/  \| |  | | |_| |___) || | | |___|  _ < 
+   |_____|___|_| \_|\___//_/\_\_|  |_|\___/|____/ |_| |_____|_| \_\
+
+
+  Commandline-Tool to configure and manage LINUXMUSTER-Cachingserver!
+
+=======================================================================
+        """)
+        print("You run command: " + args.command)
+
+    if args.command == "setup":
+        result = setup(args.name, args.ip, args.gateway, args.school, args.key, args.serverip, args.serverport, args.servername, args.serverdomain)
+        output(result, args.json)
+
+
+
+if __name__ == "__main__":
+    main()

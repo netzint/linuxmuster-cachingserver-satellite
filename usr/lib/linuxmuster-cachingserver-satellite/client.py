@@ -40,8 +40,8 @@ def connect(ip, port):
         client.connect((ip, port))
         logging.info("Connection successful!")
         return client
-    except:
-        error(f"Connection to {ip} on port {port} not possible!")
+    except Exception as e:
+        error(f"Connection to {ip} on port {port} not possible! Message: " + str(e))
 
 def authenticate(client, config):
     sendMessage(client, "auth %s" % config["key"])
@@ -90,9 +90,9 @@ def get(client, actions):
 
 def main():
     config = getConfig()
-    ip = config["server_ip"]
+    server = config["server_name"] + "." + config["server_domain"]
     port = config["server_port"]
-    client = connect(ip, port)
+    client = connect(server, port)
     authenticate(client, config)
 
     parser = argparse.ArgumentParser()

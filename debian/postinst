@@ -9,6 +9,10 @@ case "$1" in
         if [ ! -f $realConfig ]; then
             cp $exampleConfig $realConfig
         fi
+
+        systemctl stop isc-dhcp-server
+        systemctl disable isc-dhcp-server
+
         exit 0
         ;;
     upgrade|abort-upgrade)
