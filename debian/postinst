@@ -3,6 +3,13 @@ set -e
 
 case "$1" in
     install|configure)
+        exampleConfig="/var/lib/linuxmuster-cachingserver/server.json.example"
+        realConfig="/var/lib/linuxmuster-cachingserver/server.json"
+
+        if [ ! -f $realConfig ]; then
+            cp $exampleConfig $realConfig
+        fi
+
         exampleConfig="/etc/linuxmuster-cachingserver/config.json.example"
         realConfig="/etc/linuxmuster-cachingserver/config.json"
 
@@ -12,6 +19,11 @@ case "$1" in
 
         systemctl stop isc-dhcp-server
         systemctl disable isc-dhcp-server
+
+        mkdir -p /var/log/linuxmuster/cachingserver/
+
+        systemctl enable linuxmuster-cachingserver-satellite
+        systemctl start linuxmuster-cachingserver-satellite
 
         exit 0
         ;;

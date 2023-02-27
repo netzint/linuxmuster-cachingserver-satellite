@@ -1,3 +1,9 @@
+linuxmuster-cachingserver-satellite (1.0.4-0) lmn72-testing; urgency=low
+
+  * add more functions
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Tue, 27 Feb 2023 17:28:00 +0200
+
 linuxmuster-cachingserver-satellite (1.0.3-0) lmn72-testing; urgency=low
 
   * fix mistake in setup

@@ -13,7 +13,7 @@ import os
 
 def setup(name, ip, gateway, school, key, serverip, serverport, servername, serverdomain):
     try:
-        with open("/etc/linuxmuster-cachingserver/config.json", "w") as file:
+        with open("/var/lib/linuxmuster-cachingserver/server.json", "w") as file:
             json.dump({
                 "name": name,
                 "ip": ip,
