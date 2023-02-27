@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/bin/python3 /usr/lib/linuxmuster-cachingserver-satellite/satellite-server.py
+ExecStart=/usr/bin/python3 /usr/lib/linuxmuster-cachingserver-satellite/satellite_server.py
 
 [Install]
 WantedBy=multi-user.target
