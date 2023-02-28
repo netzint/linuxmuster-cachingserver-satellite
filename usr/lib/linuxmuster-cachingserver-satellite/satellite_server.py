@@ -14,7 +14,7 @@ import threading
 
 import sys
 
-sys.path.insert(0, '/opt/linuxmuster-cachingserver-satellite/usr/lib/linuxmuster-cachingserver-satellite/')
+sys.path.insert(0, '/usr/lib/linuxmuster-cachingserver-satellite/')
 
 from satellite_client import api as cachingserver_api
 
