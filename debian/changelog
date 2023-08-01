@@ -1,3 +1,9 @@
+linuxmuster-cachingserver-satellite (1.0.6-0) lmn72-testing; urgency=low
+
+  * Rewrite server and client
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Tue, 1 Auf 2023 17:28:00 +0200
+
 linuxmuster-cachingserver-satellite (1.0.5-0) lmn72-testing; urgency=low
 
   * fix mistake in system service
