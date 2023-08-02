@@ -32,9 +32,6 @@ def sendMessage(conn, msg):
         logging.debug(f"[{conn.getpeername()[0]}] Send message '{msg}'")
     conn.send(msg.encode("utf-8"))
 
-def getConfig():
-    return json.load(open("/etc/linuxmuster-cachingserver/config.json", "r"))
-
 def getSatelliteConfig():
     return json.load(open("/var/lib/linuxmuster-cachingserver/server.json", "r"))
 
@@ -47,14 +44,13 @@ def receiveMessage(conn):
     return message
 
 def main():
-    config = getConfig()
-    ip = config["ip"]
-    port = config["port"]
-    logging.info(f"Starting Cachingserver-Satellite-Server on {ip}:{port}")
+    host = "0.0.0.0"
+    port = 4456
+    logging.info(f"Starting Cachingserver-Satellite-Server on {host}:{port}")
     
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind((ip, port))
+    server.bind((host, port))
     server.listen()
 
     satelliteConfig = getSatelliteConfig()

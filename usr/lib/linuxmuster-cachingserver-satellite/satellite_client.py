@@ -14,6 +14,7 @@ import os
 import threading
 import time
 import json
+import argparse
 
 logging.basicConfig(filename='/var/log/linuxmuster/cachingserver/client.log',format='%(levelname)s: %(asctime)s %(message)s', level=logging.DEBUG)
 
@@ -42,22 +43,15 @@ def printFileTransferStatus(filename, filesize):
             break
         logging.info(f"Transfered {percent}% of '{filename}' ({currentFilesize}/{filesize})")
 
-def main():
-    config = getSatelliteConfig()
-    host = config["server_name"] + "." + config["server_domain"]
-    port = config["server_port"]
-
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
-
-    send(client, "auth " + config["key"])
-    if receive(client) != "ok":
-        logging.error("No valid answer!")
-
-    send(client, "get images")
+def download(client, item):
+    send(client, "get " + item)
     finished = False
     while not finished:
-        data = receive(client).split(" ") # get filename and size
+        data = receive(client) # get filename and size or error
+        if data == "sorry":
+            logging.error("Item does not exist!")
+            break
+        data = data.split(" ")
         if data[0] == "finished":
             finished = True
             logging.info(f"All files transfered!")
@@ -119,7 +113,41 @@ def main():
 
     client.close()
 
-    
+def connect(config):
+    host = config["server_name"] + "." + config["server_domain"]
+    port = config["server_port"]
+    logging.info(f"Starting new connection to {host} on port {port}...")
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
+    return client
+
+def auth(client, key):
+    send(client, "auth " + key)
+    if receive(client) != "ok":
+        logging.error("No valid answer!")
+        exit()
+    logging.info("Authentification successful!")
+
+def api(item):
+    config = getSatelliteConfig()
+    client = connect(config)
+
+    auth(client, config["key"])
+
+    download(item)
+
+def main():
+    config = getSatelliteConfig()
+    client = connect(config)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--item", required=True, help="Item to sync")
+    args = parser.parse_args()
+
+    auth(client, config["key"])
+
+    download(args.item)
+
 
 if __name__ == "__main__":
     logging.info("======= STARTED =======")
