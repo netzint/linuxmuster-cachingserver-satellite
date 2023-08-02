@@ -21,6 +21,7 @@ case "$1" in
         systemctl disable isc-dhcp-server
 
         mkdir -p /var/log/linuxmuster/cachingserver/
+        mkdir -p /etc/dhcp/devices
 
         systemctl enable linuxmuster-cachingserver-satellite
         systemctl start linuxmuster-cachingserver-satellite

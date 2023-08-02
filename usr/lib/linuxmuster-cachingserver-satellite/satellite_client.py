@@ -16,7 +16,11 @@ import time
 import json
 import argparse
 
+from datetime import timedelta
+
 logging.basicConfig(filename='/var/log/linuxmuster/cachingserver/client.log',format='%(levelname)s: %(asctime)s %(message)s', level=logging.DEBUG)
+
+event = threading.Event()
 
 def getSatelliteConfig():
     return json.load(open("/var/lib/linuxmuster-cachingserver/server.json", "r"))
@@ -35,13 +39,19 @@ def receive(client):
     return client.recv(1024).decode()
 
 def printFileTransferStatus(filename, filesize):
+    lastFilesize = 0
     while True:
         time.sleep(5)
         currentFilesize = os.stat(filename).st_size
         percent = round((currentFilesize / filesize) * 100, 2)
+        speed = (currentFilesize - lastFilesize) / 5
+        remaining = round((filesize - currentFilesize) / speed, 0)
         if currentFilesize == filesize:
             break
-        logging.info(f"Transfered {percent}% of '{filename}' ({currentFilesize}/{filesize})")
+        if event.is_set():
+            break
+        logging.info(f"Transfered {percent}% of '{os.path.basename(filename)}' ETA {str(timedelta(seconds=remaining))} / {round(speed / 1000 / 1000, 2)} MB/s ({currentFilesize}/{filesize})")
+        lastFilesize = currentFilesize
 
 def download(client, item):
     send(client, "get " + item)
@@ -86,6 +96,8 @@ def download(client, item):
                     break
                 if errorcounter > 10:
                     logging.error(f"Error while receiving file {filename}")
+                    event.set()
+                    statusThread.join()
                     break
                 
         f.close()
@@ -129,12 +141,13 @@ def auth(client, key):
     logging.info("Authentification successful!")
 
 def api(item):
+    logging.info(f"Request sync for '{item}' via api...")
     config = getSatelliteConfig()
     client = connect(config)
 
     auth(client, config["key"])
 
-    download(item)
+    download(client, item)
 
 def main():
     config = getSatelliteConfig()
@@ -144,9 +157,11 @@ def main():
     parser.add_argument("--item", required=True, help="Item to sync")
     args = parser.parse_args()
 
+    logging.info(f"Request sync for '{args.item}' via cli...")
+
     auth(client, config["key"])
 
-    download(args.item)
+    download(client, args.item)
 
 
 if __name__ == "__main__":

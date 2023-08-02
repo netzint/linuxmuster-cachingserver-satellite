@@ -14,11 +14,10 @@ import threading
 
 import sys
 
-sys.path.insert(0, '/usr/lib/linuxmuster-cachingserver-satellite/')
-
-from satellite_client import api as cachingserver_api
-
 logging.basicConfig(filename='/var/log/linuxmuster/cachingserver/server.log',format='%(levelname)s: %(asctime)s %(message)s', level=logging.DEBUG)
+
+sys.path.insert(0, '/usr/lib/linuxmuster-cachingserver-satellite/')
+from satellite_client import api as cachingserver_api
 
 def error(conn, addr, msg):
     logging.error(msg)
