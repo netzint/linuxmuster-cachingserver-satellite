@@ -15,12 +15,17 @@ import threading
 import time
 import json
 import argparse
+import subprocess
 
+from subprocess import PIPE
 from datetime import timedelta
 
 logging.basicConfig(filename='/var/log/linuxmuster/cachingserver/client.log',format='%(levelname)s: %(asctime)s %(message)s', level=logging.DEBUG)
 
 event = threading.Event()
+
+def __execute(command):
+    return subprocess.run(command, stdout=PIPE, stderr=PIPE)
 
 def getSatelliteConfig():
     return json.load(open("/var/lib/linuxmuster-cachingserver/server.json", "r"))
@@ -72,13 +77,23 @@ def download(client, item):
             break
         filename = data[1]
         filesize = int(data[2])
+        originalMD5hash = data[1]
         counter = 0
         errorcounter = 0
         logging.info(f"Receive new file '{filename}'...")
-        send(client, "ok")
         if not os.path.exists(os.path.split(filename)[0]):
             logging.info(f"Path '{os.path.split(filename)[0]}' does not exist. Create it...")
             os.makedirs(os.path.split(filename)[0], exist_ok=True)
+        if os.path.exists(filename):
+            logging.info(f"File {os.path.basename(filename)} exist. Comparing MD5-Hash...")
+            currentMD5hash = getMD5Hash(filename)
+            if currentMD5hash == originalMD5hash:
+                logging.info(f"File {os.path.basename(filename)} does not change. Skip...")
+                send("skip")
+                continue
+            else:
+                logging.info(f"File {os.path.basename(filename)} is old. Download new file...")
+        send(client, "ok")
         f = open(filename, "wb")
         if filesize == 0:
             f.write(b"")
@@ -116,7 +131,16 @@ def download(client, item):
             logging.error("No valid answer!")
             break
         logging.info(f"File '{filename}' is valid!")
-        send(client, "ok")
+        send(client, "posthook?")
+        posthook = receive(client)
+        if posthook != "no":
+            logging.info(f"Running posthook: {posthook}")
+            hookResult = __execute(posthook.split(" "))
+            logging.info(f"Result: {hookResult}")
+        else:
+            logging.info("No posthook defined!")
+        send(client, "done")
+            
 
     if receive(client) != "bye":
         logging.error("Server does not say bye... Now i'm sad....")
