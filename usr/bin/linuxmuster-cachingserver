@@ -10,6 +10,11 @@
 import argparse
 import json
 import os
+import sys
+import threading
+
+sys.path.insert(0, '/usr/lib/linuxmuster-cachingserver-satellite/')
+from satellite_client import api as cachingserver_api
 
 def setup(name, ip, gateway, school, key, serverip, serverport, servername, serverdomain):
     try:
@@ -95,8 +100,8 @@ def main():
     parserSetup.add_argument("--servername", required=True, help='Name on the main server')
     parserSetup.add_argument("--serverdomain", required=True, help='Domain on the main server')
 
-    parserStatus = subparsers.add_parser("status", help="Status of caching server(s)")
-    parserStatus.add_argument("-n", "--name", required=False, help='Name of the cachingserver (hostname)')
+    parserSync = subparsers.add_parser("sync", help="Sync this cachingserver")
+    parserSync.add_argument("--item", required=True, help='Item to sync')
     
     args = parser.parse_args()
 
@@ -119,6 +124,12 @@ def main():
     if args.command == "setup":
         result = setup(args.name, args.ip, args.gateway, args.school, args.key, args.serverip, args.serverport, args.servername, args.serverdomain)
         output(result, args.json)
+    elif args.command == "sync":
+        threading.Thread(target=cachingserver_api, args=(args.item,)).start()
+        output({ "status": True, "message": "Initiating sync successfully. See logfile for status..." }, args.json)
+    else:
+        parser.print_help()
+        output({ "status": False, "message": "Command not found!" }, args.json)
 
 
 

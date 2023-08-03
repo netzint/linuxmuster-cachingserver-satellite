@@ -70,7 +70,6 @@ def download(client, item):
         if data[0] == "finished":
             finished = True
             logging.info(f"All files transfered!")
-            send(client, "ok")
             break
         if data[0] != "send":
             logging.error("No valid answer!")
@@ -131,16 +130,17 @@ def download(client, item):
             logging.error("No valid answer!")
             break
         logging.info(f"File '{filename}' is valid!")
-        send(client, "posthook?")
-        posthook = receive(client)
-        if posthook != "no":
-            logging.info(f"Running posthook: {posthook}")
-            hookResult = __execute(posthook.split(" "))
-            logging.info(f"Result: {hookResult}")
-        else:
-            logging.info("No posthook defined!")
-        send(client, "done")
-            
+        send(client, "ok")
+
+    send(client, "posthook?")
+    posthook = receive(client)
+    if posthook != "no":
+        logging.info(f"Running posthook: {posthook}")
+        hookResult = __execute(posthook.split(" "))
+        logging.info(f"Result: {hookResult}")
+    else:
+        logging.info("No posthook defined!")
+    send(client, "done")       
 
     if receive(client) != "bye":
         logging.error("Server does not say bye... Now i'm sad....")
