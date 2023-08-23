@@ -1,3 +1,9 @@
+linuxmuster-cachingserver-satellite (1.1.1-0) lmn72-testing; urgency=low
+
+  * Fix error in md5 compare
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Wed, 23 Aug 2023 17:28:00 +0200
+
 linuxmuster-cachingserver-satellite (1.1.0-0) lmn72-testing; urgency=low
 
   * fix bug in client
