@@ -76,7 +76,7 @@ def download(client, item):
             break
         filename = data[1]
         filesize = int(data[2])
-        originalMD5hash = data[1]
+        originalMD5hash = data[3]
         counter = 0
         errorcounter = 0
         logging.info(f"Receive new file '{filename}'...")
@@ -88,7 +88,7 @@ def download(client, item):
             currentMD5hash = getMD5Hash(filename)
             if currentMD5hash == originalMD5hash:
                 logging.info(f"File {os.path.basename(filename)} does not change. Skip...")
-                send("skip")
+                send(client, "skip")
                 continue
             else:
                 logging.info(f"File {os.path.basename(filename)} is old. Download new file...")
