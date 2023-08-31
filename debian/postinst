@@ -10,21 +10,18 @@ case "$1" in
             cp $exampleConfig $realConfig
         fi
 
-        exampleConfig="/etc/linuxmuster-cachingserver/config.json.example"
-        realConfig="/etc/linuxmuster-cachingserver/config.json"
-
-        if [ ! -f $realConfig ]; then
-            cp $exampleConfig $realConfig
-        fi
-
         systemctl stop isc-dhcp-server
-        systemctl disable isc-dhcp-server
 
         mkdir -p /var/log/linuxmuster/cachingserver/
         mkdir -p /etc/dhcp/devices
 
-        systemctl enable linuxmuster-cachingserver-satellite
-        systemctl start linuxmuster-cachingserver-satellite
+        systemctl enable linuxmuster-cachingserver-api
+        systemctl enable tftpd-hpa
+        systemctl enable rsync
+        systemctl enable isc-dhcp-server
+        
+        systemctl start tftpd-hpa
+        systemctl start rsync
 
         exit 0
         ;;

@@ -1,0 +1,11 @@
+[Unit]
+Description=Linuxmuster Cachingserver API
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /usr/lib/linuxmuster-cachingserver/api.py
+
+[Install]
+WantedBy=multi-user.target

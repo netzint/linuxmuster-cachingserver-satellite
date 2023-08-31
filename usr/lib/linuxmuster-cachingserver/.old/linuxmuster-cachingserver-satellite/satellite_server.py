@@ -11,6 +11,8 @@ import socket
 import logging
 import json
 import threading
+import hashlib
+import os
 
 import sys
 
@@ -24,12 +26,57 @@ def error(conn, addr, msg):
     conn.close()
     logging.error(f"Connection with {addr} terminated!")
 
+def getMD5Hash(filename):
+    md5_hash = hashlib.md5()
+    with open(filename,"rb") as f:
+        for byte_block in iter(lambda: f.read(4096),b""):
+            md5_hash.update(byte_block)
+    return md5_hash.hexdigest()
+
 def sendMessage(conn, msg):
     if len(msg) > 40:
         logging.debug(f"[{conn.getpeername()[0]}] Send message '" + msg[:40].replace('\n', '') + "...'")
     else:
         logging.debug(f"[{conn.getpeername()[0]}] Send message '{msg}'")
     conn.send(msg.encode("utf-8"))
+
+def sendFile(conn, filename):
+    logging.info(f"Sending file '{filename}'")
+    successful = False
+    logging.info(f"Calculating MD5 sum for '{filename}'")
+    md5hash = getMD5Hash(filename)
+    filesize = os.stat(filename).st_size
+    tryCounter = 0
+    while not successful:
+        if tryCounter > 5:
+            return False
+        sendMessage(conn, f"send {filename} {filesize} {md5hash}")
+        r = receiveMessage(conn)
+        if r == "skip":
+            logging.info(f"File on target system is already the same!")
+            successful = True
+            return successful
+        if r != "ok":
+            return False
+        with open(filename, "rb") as f:
+            while True:
+                chunk = f.read(1024)
+                if not chunk:
+                    break
+                conn.send(chunk)
+        if receiveMessage(conn) != "ok":
+            return False
+        sendMessage(conn, f"check {filename}")
+        if receiveMessage(conn) != md5hash:
+            logging.info(f"File '{filename}' not valid on target system... Try again!")
+            tryCounter += 1
+            sendMessage(conn, "restart")
+        else:
+            sendMessage(conn, "success")
+        if receiveMessage(conn) != "ok":
+            return False
+        successful = True
+    return successful
 
 def getSatelliteConfig():
     return json.load(open("/var/lib/linuxmuster-cachingserver/server.json", "r"))
@@ -84,6 +131,10 @@ def main():
         elif message[0] == "sync":
             threading.Thread(target=cachingserver_api, args=(message[1],)).start()
             sendMessage(conn, "done")
+        elif message[0] == "file-status":
+            sendMessage(conn, "file")
+            if receiveMessage == "ok":
+                sendFile(conn, "/var/lib/linuxmuster-cachingserver/cached_filehashes.json")
 
         conn.close()
 
