@@ -11,6 +11,7 @@ import json
 import subprocess
 import logging
 import uvicorn
+import threading
 
 from fastapi import FastAPI
 from modules.sockethelper import SocketHepler
@@ -38,9 +39,11 @@ def regenerate_filehashes_on_cachingserver():
 
 @app.get("/files/sync/{item}")
 def sync_files_from_server_to_cachingserver(item):
-    try:
+    def initSync():
         client = SocketHepler(config["server_ip"], config["server_port"]).connect(config["secret"])
         client.sync(item)
+    try:
+        threading.Thread(target=initSync()).start()
         return { "status": True, "data": None }
     except Exception as e:
         return { "status": False, "data": str(e) }

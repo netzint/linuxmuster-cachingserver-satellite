@@ -66,7 +66,7 @@ class FileSyncer:
                 self.client.socket.send(chunk)
                 currentFilesize = os.stat(filename).st_size
                 percent = round((currentFilesize / filesize) * 100, 2)
-                speed = (currentFilesize - lastFilesize) / 5
+                speed = 1 if (currentFilesize - lastFilesize) == 0 else ((currentFilesize - lastFilesize) / 5)
                 remaining = round((filesize - currentFilesize) / speed, 0)
                 lastFilesize = currentFilesize
 
@@ -87,7 +87,7 @@ class FileSyncer:
             self.sendFile(filename)
         if message != "ok":
             return
-        logging.info(f"[{self.client.socket.getpeername()[0]}] File sended successfully!")
+        logging.info(f"[{self.client.socket.getpeername()[0]}] File '{filename}' sended successfully!")
 
 
     def receiveFiles(self) -> None:
@@ -112,7 +112,7 @@ class FileSyncer:
             message = self.client.receive()
             message = message.split(" ")
             filename = message[0]
-            filesize = message[1]
+            filesize = int(message[1])
             filehash = message[2]
             logging.info(f"[{self.client.socket.getpeername()[0]}] Start receiving file '{filename}'")
 
@@ -152,7 +152,7 @@ class FileSyncer:
                         break
                     currentFilesize = os.stat(filename).st_size
                     percent = round((currentFilesize / filesize) * 100, 2)
-                    speed = (currentFilesize - lastFilesize) / 5
+                    speed = 1 if lastFilesize == 0 else (currentFilesize - lastFilesize) / 5
                     remaining = round((filesize - currentFilesize) / speed, 0)
                     lastFilesize = currentFilesize
             f.close()
@@ -164,7 +164,7 @@ class FileSyncer:
             if self.client.receive() != "check":
                 return
             
-            if filehash == HashHelper(filename).getMD5():
+            if filehash != HashHelper(filename).getMD5():
                 logging.info(f"[{self.client.socket.getpeername()[0]}] File on client is not valid. Try again!")
                 self.client.send("restart")
                 self.receiveFiles()

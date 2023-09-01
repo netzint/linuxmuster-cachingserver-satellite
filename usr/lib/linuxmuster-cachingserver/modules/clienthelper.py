@@ -17,10 +17,11 @@ from modules.filesyncer import FileSyncer
 
 class ClientHelper:
 
-    def __init__(self, socket, address, secret) -> None:
+    def __init__(self, socket, address, secret, server=None) -> None:
         self.socket = socket
         self.address = address
         self.secret = secret
+        self.server = server
 
         actionfile = "/var/lib/linuxmuster-cachingserver/actions.json"
         actionoveridefile = "/var/lib/linuxmuster-cachingserver/actions.overide.json"
@@ -88,8 +89,16 @@ class ClientHelper:
                 self.send("invalid")
                 return
             
-            ## send file
-            syncer = FileSyncer(self, self.actions[action]["pattern"])
+            ## check if action is images and filter required images
+            if action == "images":
+                pattern = ""
+                for image in self.server["images"]:
+                    pattern += "/srv/linbo/images/" + image.split(".")[0] + "/*;"
+                if pattern != "":
+                    pattern = pattern[:-1]
+            else:
+                pattern = self.actions[action]["pattern"]
+            syncer = FileSyncer(self, pattern)
             syncer.sync()
 
             ## handle posthook

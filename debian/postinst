@@ -23,6 +23,8 @@ case "$1" in
         systemctl start tftpd-hpa
         systemctl start rsync
 
+        pip3 install fastapi -U
+
         exit 0
         ;;
     upgrade|abort-upgrade)

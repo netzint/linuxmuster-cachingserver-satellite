@@ -12,19 +12,43 @@ import logging
 import os
 import time
 import threading
+import json
 
 class HashHelper:
 
-    def __init__(self, filename) -> None:
+    def __init__(self, filename, save=True) -> None:
         self.filename = filename
+        self.save = save
 
-    def getMD5(self):
+    def __saveHash(self, hash) -> None:
+        if not self.save:
+            return
+        
+        with open("/var/lib/linuxmuster-cachingserver/cached_filehashes.json", "r") as f:
+            cached_hashes = json.load(f)
+
+        if self.filename in cached_hashes:
+            cached_hashes[self.filename]["hash"] = hash
+        else:
+            cached_hashes[self.filename] = {
+                "filename": self.filename.split("/")[len(self.filename.split("/")) - 1],
+                "hash": hash,
+                "action": "n/a"
+            }
+        
+        with open("/var/lib/linuxmuster-cachingserver/cached_filehashes.json", "w") as f:
+            json.dump(cached_hashes, f)
+
+    def getMD5(self) -> str:
         def printStatus():
             while True:
                 time.sleep(5)
                 logging.info(f"[{os.path.basename(self.filename)}] Generating MD5-Hash ({counter} / {filesize}) => {percent}%")
                 if counter >= filesize:
                     break
+        
+        if not os.path.exists(self.filename):
+            return "0"
 
         md5_hash = hashlib.md5()
         filesize = os.stat(self.filename).st_size
@@ -36,4 +60,6 @@ class HashHelper:
                 md5_hash.update(byte_block)
                 counter += 4096
                 percent = round((counter / filesize) * 100, 2)
-        return md5_hash.hexdigest()
+        hash = md5_hash.hexdigest()
+        self.__saveHash(hash)
+        return hash

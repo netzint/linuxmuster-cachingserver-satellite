@@ -30,20 +30,20 @@ class SocketHepler:
     def setAuthfile(self, authfile) -> None:
         self.authfile = authfile
 
-    def checkServerAndGetSecret(self, address) -> str:
+    def checkAndGetServer(self, address) -> str:
         servers = json.load(open(self.authfile, "r"))
         for server in servers:
             if address == servers[server]["ip"]:
-                return servers[server]["secret"]
+                return servers[server]
         return None
 
     def waitForClient(self) -> None:
         while True:
             client_socket, client_address = self.socket.accept()
             logging.info(f"New connection from {client_address[0]}:{client_address[1]}")
-            secret = self.checkServerAndGetSecret(client_address[0])
-            if secret:
-                client = ClientHelper(client_socket, client_address, secret)
+            server = self.checkAndGetServer(client_address[0])
+            if server:
+                client = ClientHelper(client_socket, client_address, server["secret"], server)
                 logging.info(f"[{client_address[0]}] Client registered. Starting new thread!")
                 client_handler = threading.Thread(target=client.handle())
                 client_handler.start()
