@@ -13,7 +13,7 @@ import logging
 import uvicorn
 import threading
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from modules.sockethelper import SocketHepler
 
 logging.basicConfig(filename='/var/log/linuxmuster/cachingserver/api.log',format='%(levelname)s: %(asctime)s %(message)s', level=logging.DEBUG)
@@ -38,11 +38,12 @@ def regenerate_filehashes_on_cachingserver():
     return { "status": True, "data": None }
 
 @app.get("/files/sync/{item}")
-def sync_files_from_server_to_cachingserver(item):
+def sync_files_from_server_to_cachingserver(item, background_tasks: BackgroundTasks):
     def initSync():
         client = SocketHepler(config["server_ip"], config["server_port"]).connect(config["secret"])
         client.sync(item)
     try:
+        background_tasks.add_task(initSync)
         threading.Thread(target=initSync()).start()
         return { "status": True, "data": None }
     except Exception as e:

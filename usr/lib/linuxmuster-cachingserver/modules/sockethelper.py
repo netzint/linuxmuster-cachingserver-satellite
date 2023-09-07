@@ -45,7 +45,7 @@ class SocketHepler:
             if server:
                 client = ClientHelper(client_socket, client_address, server["secret"], server)
                 logging.info(f"[{client_address[0]}] Client registered. Starting new thread!")
-                client_handler = threading.Thread(target=client.handle())
+                client_handler = threading.Thread(target=client.handle(), daemon=True)
                 client_handler.start()
             else:
                 logging.info(f"[{client_address[0]}] Client not registered at this server! Terminate connection!")
