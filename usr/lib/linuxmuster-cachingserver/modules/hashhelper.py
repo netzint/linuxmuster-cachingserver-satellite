@@ -43,9 +43,9 @@ class HashHelper:
         def printStatus():
             while True:
                 time.sleep(5)
-                logging.info(f"[{os.path.basename(self.filename)}] Generating MD5-Hash ({counter} / {filesize}) => {percent}%")
                 if counter >= filesize:
                     break
+                logging.info(f"[{os.path.basename(self.filename)}] Generating MD5-Hash ({counter} / {filesize}) => {percent}%")
         
         if not os.path.exists(self.filename):
             return "0"

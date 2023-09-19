@@ -23,7 +23,10 @@ case "$1" in
         systemctl start tftpd-hpa
         systemctl start rsync
 
+        systemctl restart cron
+
         pip3 install fastapi -U
+        pip3 install uvicorn
 
         exit 0
         ;;

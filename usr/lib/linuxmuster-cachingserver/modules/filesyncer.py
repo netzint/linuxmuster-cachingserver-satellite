@@ -152,7 +152,7 @@ class FileSyncer:
                         break
                     currentFilesize = os.stat(filename).st_size
                     percent = round((currentFilesize / filesize) * 100, 2)
-                    speed = 1 if lastFilesize == 0 else (currentFilesize - lastFilesize) / 5
+                    speed = 1 if (currentFilesize - lastFilesize) == 0 else ((currentFilesize - lastFilesize) / 5)
                     remaining = round((filesize - currentFilesize) / speed, 0)
                     lastFilesize = currentFilesize
             f.close()

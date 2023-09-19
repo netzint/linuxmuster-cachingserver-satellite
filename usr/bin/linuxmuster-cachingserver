@@ -70,9 +70,9 @@ def setup(name, ip, gateway, school, secret, serverip, serverport, servername, s
         subprocess.Popen("systemctl restart isc-dhcp-server")
         subprocess.Popen("systemctl restart linuxmuster-cachingserver-api")
 
-        return { "status": True, "message": "Config applied successfully!" }
+        return { "status": True, "data": "Config applied successfully!" }
     except Exception as e:
-        return { "status": False, "message": "Failed to apply config! Error: " + str(e) }
+        return { "status": False, "data": "Failed to apply config! Error: " + str(e) }
 
 
 def output(text, printjson=False):
@@ -80,7 +80,7 @@ def output(text, printjson=False):
         print(json.dumps(text))
     else:
         status = "SUCCESS" if text["status"] else "ERROR"
-        print("[%s] %s" % (status, text["message"]))
+        print("[%s] %s" % (status, text["data"]))
 
 def apiRequest(url):
     try:
@@ -140,7 +140,7 @@ def main():
         output(result, args.json)
     else:
         parser.print_help()
-        output({ "status": False, "message": "Command not found!" }, args.json)
+        output({ "status": False, "data": "Command not found!" }, args.json)
 
 
 
