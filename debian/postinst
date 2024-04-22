@@ -19,14 +19,17 @@ case "$1" in
         systemctl enable tftpd-hpa
         systemctl enable rsync
         systemctl enable isc-dhcp-server
-        
-        systemctl start tftpd-hpa
-        systemctl start rsync
-
-        systemctl restart cron
 
         pip3 install fastapi -U
         pip3 install uvicorn
+        pip3 install jc
+
+        python3 /usr/share/linuxmuster-cachingserver-satellite/migrate-server-secret.py
+
+        systemctl restart tftpd-hpa
+        systemctl restart rsync
+        systemctl restart cron
+        systemctl restart linuxmuster-cachingserver-api
 
         exit 0
         ;;

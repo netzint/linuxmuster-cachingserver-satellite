@@ -76,8 +76,11 @@ def setup(name, ip, gateway, school, secret, serverip, serverport, servername, s
             with open("/etc/hosts", "w") as f:
                 f.write(file_hosts)
 
+        with open("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", "w") as f:
+            f.write(secret)
+
         subprocess.Popen(["/usr/bin/systemctl", "restart", "isc-dhcp-server"])
-        subprocess.Popen("/usr/bin/systemctl", "restart", "linuxmuster-cachingserver-api")
+        subprocess.Popen(["/usr/bin/systemctl", "restart", "linuxmuster-cachingserver-api"])
 
         return { "status": True, "data": "Config applied successfully!" }
     except Exception as e:
@@ -115,10 +118,9 @@ def main():
     parserSetup.add_argument("--servername", required=True, help='Name on the main server')
     parserSetup.add_argument("--serverdomain", required=True, help='Domain on the main server')
 
-    parserStatus = subparsers.add_parser("status", help="Status of this caching server")
-
-    parserSync = subparsers.add_parser("sync", help="Sync this cachingserver")
-    parserSync.add_argument("--item", required=True, help='Item to sync')
+    subparsers.add_parser("status", help="Status of this caching server")
+    subparsers.add_parser("update-config", help="Sync this cachingserver", dest="updateconfig")
+    subparsers.add_parser("update-images", help="Sync this cachingserver", dest="updateimages")
     
     args = parser.parse_args()
 
@@ -142,10 +144,13 @@ def main():
         result = setup(args.name, args.ip, args.gateway, args.school, args.secret, args.serverip, args.serverport, args.servername, args.serverdomain)
         output(result, args.json)
     elif args.command == "status":
-        result = apiRequest("status")
+        result = apiRequest("v1/status")
         output(result, args.json)
-    elif args.command == "sync":
-        result = apiRequest(f"files/sync/{args.item}")
+    elif args.command == "updateconfig":
+        result = apiRequest("v1/configuration/sync")
+        output(result, args.json)
+    elif args.command == "updateimages":
+        result = apiRequest("v1/images/sync")
         output(result, args.json)
     else:
         parser.print_help()

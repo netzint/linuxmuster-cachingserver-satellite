@@ -2,7 +2,7 @@
 
 #########################################################
 # 
-# by Netzint GmbH 2023
+# by Netzint GmbH 2024
 # Lukas Spitznagel (lukas.spitznagel@netzint.de)
 # 
 #########################################################
@@ -11,79 +11,145 @@ import json
 import subprocess
 import logging
 import uvicorn
-import threading
 
 from fastapi import FastAPI, BackgroundTasks
-from modules.sockethelper import SocketHepler
+from modules.RSyncHelper import RSyncHelper
 
 logging.basicConfig(filename='/var/log/linuxmuster/cachingserver/api.log',format='%(levelname)s: %(asctime)s %(message)s', level=logging.DEBUG)
 
 with open("/var/lib/linuxmuster-cachingserver/server.json") as f:
     config = json.load(f)
 
+configuration_files = [
+    {"share": "cachingserver-dhcp", "pattern": "subnets.conf", "destination": "/etc/dhcp/"},
+    {"share": "cachingserver-dhcp", "pattern": "devices/*.conf", "destination": "/etc/dhcp/devices/"},
+    {"share": "cachingserver-dhcp", "pattern": "devices.conf", "destination": "/etc/dhcp/"},
+    {"share": "cachingserver-ssh", "pattern": "id_rsa*", "destination": "/root/.ssh/"},
+    {"share": "cachingserver-linuxmuster", "pattern": "setup.ini", "destination": "/var/lib/linuxmuster/"},
+    {"share": "cachingserver-linbo", "pattern": "start.conf.*", "destination": "/srv/linbo/"},
+    {"share": "cachingserver-linbo", "pattern": "boot/grub/*.cfg", "destination": "/srv/linbo/boot/grub/"},
+    {"share": "cachingserver-linbo", "pattern": "linbocmd/*", "destination": "/srv/linbo/linbocmd/"},
+    {"share": "cachingserver-school", "pattern": "default-school/devices.csv", "destination": "/etc/linuxmuster/sophomorix/default-school/"},
+    {"share": "cachingserver-school", "pattern": "*", "destination": "/etc/linuxmuster/sophomorix/", "include": "*.devices.csv", "exclude": "*"},
+]
+
 app = FastAPI()
 
-@app.get("/status")
+@app.get("/v1/status")
 def get_status_of_cachingserver():
     return { "status": True, "data": "Cachingserver is reachable!" }
 
 #########################################
-# FILES
+# CONFIGURATION
 #########################################
 
-@app.get("/files/hashes/get")
-def get_filehashes_from_cachingserver():
-    with open("/var/lib/linuxmuster-cachingserver/cached_filehashes.json") as f:
-        return { "status": True, "data": json.load(f) }
-    
-@app.get("/files/hashes/regenerate")
-def regenerate_filehashes_on_cachingserver(background_tasks: BackgroundTasks):
-    def initCache():
-        subprocess.Popen(["/usr/lib/linuxmuster-cachingserver/cacheFileHashes.py"])
-    background_tasks.add_task(initCache)
-    return { "status": True, "data": "Successful initiated!" }
+@app.get("/v1/configuration/check")
+def check_configuration_files_on_server():
+    helper = RSyncHelper(config["name"], config["server_ip"])
+    result = helper.check(configuration_files)
+    return { "status": result, "data": "" }
 
-@app.get("/files/sync/{item}")
-def sync_files_from_server_to_cachingserver(item, background_tasks: BackgroundTasks):
+@app.get("/v1/configuration/sync")
+def sync_configuration_files_with_server(background_tasks: BackgroundTasks):
     def initSync():
-        client = SocketHepler(config["server_ip"], config["server_port"]).connect(config["secret"])
-        client.sync(item)
+        helper = RSyncHelper(config["name"], config["server_ip"])
+        helper.sync(configuration_files)
+        
     background_tasks.add_task(initSync)
     return { "status": True, "data": "Successful initiated!" }
+
+#########################################
+# IMAGES
+#########################################
+
+@app.get("/v1/images/check")
+def check_image_files_on_server():
+    logging.info("Refreshing image database file...")
+    helper = RSyncHelper(config["name"], config["server_ip"])
+    helper.update_file("cachingserver-linuxmuster-cachingserver", config["name"] + "_images.json", "/var/lib/linuxmuster-cachingserver/")
+
+    image_files = []
+    try:
+        with open("/var/lib/linuxmuster-cachingserver/" + config["name"] + "_images.json") as f:
+            for image in json.load(f):
+                image_files.append({"share": "cachingserver-images", "pattern": image + "/*", "destination": "/srv/linbo/images/" + image})
+
+        if len(image_files) != 0:
+            logging.info(f"Found {len(image_files)} images to sync localy!")
+            result = helper.check(image_files)
+            return { "status": result, "data": "" }
+        else:
+            logging.info("No images configured!")
+            return { "status": True, "data": "" }
+    except Exception as e:
+        logging.error(e)
+        logging.info("No images configured!")
+        return { "status": True, "data": "" }
+
+
+@app.get("/v1/images/sync")
+def sync_image_files_with_server(background_tasks: BackgroundTasks):
+    logging.info("Refreshing image database file...")
+    helper = RSyncHelper(config["name"], config["server_ip"])
+    helper.update_file("cachingserver-linuxmuster-cachingserver", config["name"] + "_images.json", "/var/lib/linuxmuster-cachingserver/")
+
+    image_files = []
+    try:
+        with open("/var/lib/linuxmuster-cachingserver/" + config["name"] + "_images.json") as f:
+            for image in json.load(f):
+                image_files.append({"share": "cachingserver-images", "pattern": image + "/*", "destination": "/srv/linbo/images/" + image})
+
+        if len(image_files) != 0:
+            logging.info(f"Found {len(image_files)} images to sync localy!")
+            
+            def initSync():
+                helper = RSyncHelper(config["name"], config["server_ip"])
+                helper.sync(image_files)
+                
+            background_tasks.add_task(initSync)
+
+            return { "status": True, "data": "" }
+        else:
+            logging.info("No images configured!")
+            return { "status": True, "data": "" }
+    except:
+        logging.info("No images configured!")
+        return { "status": True, "data": "" }
 
 #########################################
 # SERVICES
 #########################################
 
-@app.get("/services/status/{service}")
+@app.get("/v1/services/status/{service}")
 def get_status_of_service(service):
     stat = subprocess.call(["systemctl", "is-active", "--quiet", service])
     if(stat == 0):
         return { "status": True, "data": "Service is active" }
     return { "status": False, "data": "Service is unknown or inactive" }
 
-@app.get("/services/start/{service}")
+@app.get("/v1/services/start/{service}")
 def start_given_service(service, background_tasks: BackgroundTasks):
     def start():
         subprocess.Popen(["/usr/bin/systemctl", "start", service])
     background_tasks.add_task(start)
     return { "status": True, "data": "Initiate start successfully!" }
 
-@app.get("/services/stop/{service}")
+@app.get("/v1/services/stop/{service}")
 def stop_given_service(service, background_tasks: BackgroundTasks):
     def stop():
         subprocess.Popen(["/usr/bin/systemctl", "stop", service])
     background_tasks.add_task(stop)
     return { "status": True, "data": "Initiate stop successfully!" }
 
-@app.get("/services/restart/{service}")
+@app.get("/v1/services/restart/{service}")
 def restart_given_service(service, background_tasks: BackgroundTasks):
     def restart():
-        subprocess.Popen(["/usr/bin/systemctl", "sretart", service])
+        subprocess.Popen(["/usr/bin/systemctl", "restart", service])
     background_tasks.add_task(restart)
     return { "status": True, "data": "Initiate restart successfully!" }
 
 def main():
+    logging.info("Starting Linuxmuster-Cachingserver-API on port 4457!")
     uvicorn.run(app, host="0.0.0.0", port=4457)
 
 if __name__ == "__main__":
