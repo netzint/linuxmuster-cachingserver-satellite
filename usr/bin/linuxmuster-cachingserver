@@ -24,7 +24,6 @@ def setup(name, ip, gateway, school, secret, serverip, serverport, servername, s
                 "school": school,
                 "secret": secret,
                 "server_ip": serverip,
-                "server_port": int(serverport),
                 "server_name": servername,
                 "server_domain": serverdomain,
             }, file, indent=4)
@@ -79,8 +78,10 @@ def setup(name, ip, gateway, school, secret, serverip, serverport, servername, s
         with open("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", "w") as f:
             f.write(secret)
 
-        subprocess.Popen(["/usr/bin/systemctl", "restart", "isc-dhcp-server"])
+        os.chmod("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", 600)
+
         subprocess.Popen(["/usr/bin/systemctl", "restart", "linuxmuster-cachingserver-api"])
+        apiRequest("v1/configuration/sync")
 
         return { "status": True, "data": "Config applied successfully!" }
     except Exception as e:
@@ -106,7 +107,7 @@ def main():
     parser.add_argument("--debug", required=False, help="Print debug output", action="store_true")
     parser.add_argument("--json", required=False, help="Print output as json", action="store_true")
 
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", required=True)
     parserSetup = subparsers.add_parser("setup", help="Setup a caching server")
     parserSetup.add_argument("--name", required=True, help='Name of the cachingserver (hostname)')
     parserSetup.add_argument("--ip", required=True, help='IP of the cachingserver')
@@ -114,13 +115,12 @@ def main():
     parserSetup.add_argument("--school", required=True, help='School for the cachingserver')
     parserSetup.add_argument("--secret", required=True, help='Secret for the cachingserver')
     parserSetup.add_argument("--serverip", required=True, help='IP of the main server')
-    parserSetup.add_argument("--serverport", required=True, help='Port on the main server')
     parserSetup.add_argument("--servername", required=True, help='Name on the main server')
     parserSetup.add_argument("--serverdomain", required=True, help='Domain on the main server')
 
     subparsers.add_parser("status", help="Status of this caching server")
-    subparsers.add_parser("update-config", help="Sync this cachingserver", dest="updateconfig")
-    subparsers.add_parser("update-images", help="Sync this cachingserver", dest="updateimages")
+    subparsers.add_parser("update-config", help="Sync this cachingserver")
+    subparsers.add_parser("update-images", help="Sync this cachingserver")
     
     args = parser.parse_args()
 
@@ -146,10 +146,10 @@ def main():
     elif args.command == "status":
         result = apiRequest("v1/status")
         output(result, args.json)
-    elif args.command == "updateconfig":
+    elif args.command == "update-config":
         result = apiRequest("v1/configuration/sync")
         output(result, args.json)
-    elif args.command == "updateimages":
+    elif args.command == "update-images":
         result = apiRequest("v1/images/sync")
         output(result, args.json)
     else:
