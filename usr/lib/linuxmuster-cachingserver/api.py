@@ -116,6 +116,11 @@ def sync_image_files_with_server(background_tasks: BackgroundTasks):
         logging.info("No images configured!")
         return { "status": True, "data": "" }
 
+@app.get("/v1/images/sync/status")
+def check_image_status_of_image_sync():
+    helper = RSyncHelper(config["name"], config["server_ip"])
+    return { "status": True, "data": helper.syncStatus() }
+
 #########################################
 # SERVICES
 #########################################
@@ -148,9 +153,23 @@ def restart_given_service(service, background_tasks: BackgroundTasks):
     background_tasks.add_task(restart)
     return { "status": True, "data": "Initiate restart successfully!" }
 
+#########################################
+# LOGS
+#########################################
+
+@app.get("/v1/logs")
+def get_logs():
+    with open("/var/log/linuxmuster/cachingserver/api.log") as f:
+        return { "status": True, "data": "".join(f.readlines()[-100:]) }
+
+#########################################
+
 def main():
     logging.info("Starting Linuxmuster-Cachingserver-API on port 4457!")
     uvicorn.run(app, host="0.0.0.0", port=4457)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.error(e)

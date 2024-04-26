@@ -1,3 +1,10 @@
+linuxmuster-cachingserver-satellite (1.1.6-0) lmn72-testing; urgency=low
+
+  * Switch to rsync on server side, so client have to be the same
+  * Update api
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Thu, 19 Sep 2023 17:28:00 +0200
+
 linuxmuster-cachingserver-satellite (1.1.5-0) lmn72-testing; urgency=low
 
   * Fix some problemes

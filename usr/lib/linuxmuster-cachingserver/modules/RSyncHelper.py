@@ -9,12 +9,30 @@ import json
 import logging
 import threading
 import time
+import os
 
 class RSyncHelper:
 
     def __init__(self, name:str, server:str) -> None:
         self.name = name
         self.server = server
+
+        self.pid = "/var/lib/linuxmuster-cachingserver/" + self.name + "_sync.pid"
+
+    def __create_task_pid(self) -> bool:
+        if not os.path.exists(self.pid):
+            with open(self.pid, "w") as f:
+                f.write(str(time.time()))
+            return True
+        return False
+
+    def __remove_task_pid(self) -> None:
+        os.remove(self.pid)
+
+    def __status_task_pid(self) -> tuple:
+        if os.path.exists(self.pid):
+            return (True, float(open(self.pid).read()))
+        return (False, None)
 
     def __execute_rsync_command(self, command:list) -> list:
         output = subprocess.check_output(command, text=True)
@@ -160,6 +178,14 @@ class RSyncHelper:
         return status
     
     def sync(self, configuration_files:list) -> None:
+        while(self.__status_task_pid()[0]):
+            logging.info(f"Sync task already running since {(time.time() - self.__status_task_pid()[1])} seconds. Waiting for it to finish!")
+            time.sleep(2)
+        
+        self.__create_task_pid()
+
+        t1 = time.time()
+
         logging.info(f"Starting new download process for {self.name} on {self.server}...")
 
         threads = []
@@ -181,6 +207,12 @@ class RSyncHelper:
         for service in [ "isc-dhcp-server", "linbo-torrent", "linbo-multicast" ]:
             logging.info(f"Restart service '{service}'")
             subprocess.Popen(["/usr/bin/systemctl", "restart", service])
+        
+        t2 = time.time()
+        logging.info("Download process finished after %s seconds!" % (t2 - t1))
 
-        logging.info("Download process finished!")
+        self.__remove_task_pid()
+
+    def syncStatus(self) -> tuple:
+        return self.__status_task_pid()
         
