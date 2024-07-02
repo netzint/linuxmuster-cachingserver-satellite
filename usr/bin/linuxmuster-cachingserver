@@ -14,7 +14,7 @@ import subprocess
 import requests
 import socket
 
-def setup(name, ip, gateway, school, secret, serverip, serverport, servername, serverdomain):
+def setup(name, ip, gateway, school, secret, serverip, servername, serverdomain):
     try:
         with open("/var/lib/linuxmuster-cachingserver/server.json", "w") as file:
             json.dump({
@@ -141,7 +141,7 @@ def main():
         print("You run command: " + args.command)
 
     if args.command == "setup":
-        result = setup(args.name, args.ip, args.gateway, args.school, args.secret, args.serverip, args.serverport, args.servername, args.serverdomain)
+        result = setup(args.name, args.ip, args.gateway, args.school, args.secret, args.serverip, args.servername, args.serverdomain)
         output(result, args.json)
     elif args.command == "status":
         result = apiRequest("v1/status")
