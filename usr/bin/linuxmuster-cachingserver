@@ -13,6 +13,7 @@ import os
 import subprocess
 import requests
 import socket
+import time
 
 def setup(name, ip, gateway, school, secret, serverip, servername, serverdomain):
     try:
@@ -81,7 +82,27 @@ def setup(name, ip, gateway, school, secret, serverip, servername, serverdomain)
         os.chmod("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", 600)
 
         subprocess.Popen(["/usr/bin/systemctl", "restart", "linuxmuster-cachingserver-api"])
+
+        print("# Sync configuration from server to this cachingserver....")
+
+        if os.path.exists("/var/lib/linuxmuster/setup.ini"):
+            os.remove("/var/lib/linuxmuster/setup.ini")
+
         apiRequest("v1/configuration/sync")
+        count = 0
+        while not os.path.exists("/var/lib/linuxmuster/setup.ini"):
+            print(".", end="")
+            count += 1
+
+            if count > 180:
+                print()
+                print("# The files could not be synchronized!")
+                exit(1)
+
+            time.sleep(1)
+
+        p = subprocess.Popen(["/usr/share/linuxmuster/linbo/linbo-configure.sh"])
+        p.communicate()
 
         return { "status": True, "data": "Config applied successfully!" }
     except Exception as e:
