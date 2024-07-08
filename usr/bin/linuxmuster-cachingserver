@@ -79,7 +79,7 @@ def setup(name, ip, gateway, school, secret, serverip, servername, serverdomain)
         with open("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", "w") as f:
             f.write(secret)
 
-        os.chmod("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", 600)
+        os.chmod("/var/lib/linuxmuster-cachingserver/cachingserver_rsync.secret", 0o600)
 
         subprocess.Popen(["/usr/bin/systemctl", "restart", "linuxmuster-cachingserver-api"])
 
