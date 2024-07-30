@@ -72,7 +72,7 @@ def check_image_files_on_server():
     try:
         with open("/var/lib/linuxmuster-cachingserver/" + config["name"] + "_images.json") as f:
             for image in json.load(f):
-                image_files.append({"share": "cachingserver-images", "pattern": image + "/*", "destination": "/srv/linbo/images/" + image})
+                image_files.append({"share": "cachingserver-images", "pattern": image + "/*", "destination": "/srv/linbo/images/" + image, "exclude": "*/backups/*"})
 
         if len(image_files) != 0:
             logging.info(f"Found {len(image_files)} images to sync localy!")
