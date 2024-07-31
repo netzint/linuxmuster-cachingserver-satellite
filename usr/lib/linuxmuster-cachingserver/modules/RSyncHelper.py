@@ -202,7 +202,37 @@ class RSyncHelper:
         for thread in threads:
             thread.join()
             
-        logging.info(f"All threads are finished! Now running post-hooks!")
+        logging.info(f"All threads are finished!")
+
+        logging.info(f"Checking hostname in /etc/hosts...")
+        
+        ip = socket.gethostbyname(socket.gethostname())
+        hostname = socket.gethostname()
+        if "." in hostname:
+            shortname = hostname.split(".")[0]
+        else:
+            shortname = hostname
+
+        new_hosts_file = []
+        with open("/etc/hosts") as f:
+            entry_found = False
+            for line in f.readlines():
+                if "server" in line:
+                    if socket.gethostbyname(socket.gethostname()) not in line:
+                        new_hosts_file.append(ip + " " + shortname)
+                        entry_found = True
+                        logging.info(f"No entry found. Add '{ip} {shortname}' to /etc/hosts")
+                    else:
+                        logging.info("IP and hostname in /etc/hosts are correct!")
+                else:
+                    new_hosts_file.append(line)
+            if not entry_found:
+                new_hosts_file.append(ip + " " + shortname)
+                logging.info(f"No entry found. Add '{ip} {shortname}' to /etc/hosts")
+
+        with open("/etc/hosts", "w") as f:
+          for line in new_hosts_file:
+            f.write(line)
 
         for service in [ "isc-dhcp-server", "linbo-torrent", "linbo-multicast" ]:
             logging.info(f"Restart service '{service}'")

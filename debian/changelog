@@ -1,3 +1,9 @@
+linuxmuster-cachingserver-satellite (1.2.1-0) lmn72-testing; urgency=low
+
+  * Change ip in /etc/hosts on update-config
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Wed, 31 Jul 2024 17:19:00 +0200
+
 linuxmuster-cachingserver-satellite (1.2.0-0) lmn72-testing; urgency=low
 
   * Update permissions for secret file

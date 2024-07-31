@@ -54,7 +54,7 @@ def sync_configuration_files_with_server(background_tasks: BackgroundTasks):
     def initSync():
         helper = RSyncHelper(config["name"], config["server_ip"])
         helper.sync(configuration_files)
-        
+
     background_tasks.add_task(initSync)
     return { "status": True, "data": "Successful initiated!" }
 
@@ -97,15 +97,15 @@ def sync_image_files_with_server(background_tasks: BackgroundTasks):
     try:
         with open("/var/lib/linuxmuster-cachingserver/" + config["name"] + "_images.json") as f:
             for image in json.load(f):
-                image_files.append({"share": "cachingserver-images", "pattern": image + "/*", "destination": "/srv/linbo/images/" + image})
+                image_files.append({"share": "cachingserver-images", "pattern": image + "/*", "destination": "/srv/linbo/images/" + image, "exclude": "*/backups/*"})
 
         if len(image_files) != 0:
             logging.info(f"Found {len(image_files)} images to sync localy!")
-            
+
             def initSync():
                 helper = RSyncHelper(config["name"], config["server_ip"])
                 helper.sync(image_files)
-                
+
             background_tasks.add_task(initSync)
 
             return { "status": True, "data": "" }
