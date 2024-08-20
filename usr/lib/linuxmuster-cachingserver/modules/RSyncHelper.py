@@ -10,6 +10,8 @@ import logging
 import threading
 import time
 import os
+import socket
+import netifaces as ni
 
 class RSyncHelper:
 
@@ -38,6 +40,13 @@ class RSyncHelper:
         output = subprocess.check_output(command, text=True)
         result = jc.parse('rsync', output)
         return result
+
+    def __get_ip_address(self, interface='ens18'):
+        try:
+            ip_address = ni.ifaddresses(interface)[ni.AF_INET][0]['addr']
+        except (ValueError, KeyError):
+            ip_address = None
+        return ip_address
 
     def check_file_status(self, share:str, pattern:str, destination:str, include:str=None, exclude:str=None) -> bool:
         """
@@ -206,7 +215,7 @@ class RSyncHelper:
 
         logging.info(f"Checking hostname in /etc/hosts...")
         
-        ip = socket.gethostbyname(socket.gethostname())
+        ip = self.__get_ip_address()
         hostname = socket.gethostname()
         if "." in hostname:
             shortname = hostname.split(".")[0]
@@ -217,7 +226,7 @@ class RSyncHelper:
         with open("/etc/hosts") as f:
             entry_found = False
             for line in f.readlines():
-                if "server" in line:
+                if hostname in line:
                     if socket.gethostbyname(socket.gethostname()) not in line:
                         new_hosts_file.append(ip + " " + shortname)
                         entry_found = True
