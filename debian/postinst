@@ -10,7 +10,7 @@ case "$1" in
             cp $exampleConfig $realConfig
         fi
 
-        systemctl stop isc-dhcp-server
+        sed -i "s/&include \/etc\/rsyncd.d//g" /etc/rsyncd.conf
 
         mkdir -p /var/log/linuxmuster/cachingserver/
         mkdir -p /etc/dhcp/devices
