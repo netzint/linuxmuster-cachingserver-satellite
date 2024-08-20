@@ -1,3 +1,9 @@
+linuxmuster-cachingserver-satellite (1.2.3-0) lmn72-testing; urgency=low
+
+  * Update hostname fix
+
+ -- Lukas Spitznagel <lukas.spitznagel@netzint.de>  Tue, 20 Aug 2024 17:19:00 +0200
+
 linuxmuster-cachingserver-satellite (1.2.2-0) lmn72-testing; urgency=low
 
   * Remove include-line from rsyncd.conf
