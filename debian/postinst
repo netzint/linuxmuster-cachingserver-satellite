@@ -10,7 +10,9 @@ case "$1" in
             cp $exampleConfig $realConfig
         fi
 
-        sed -i "s/&include \/etc\/rsyncd.d//g" /etc/rsyncd.conf
+        if [ -f /etc/rsyncd.conf ]; then
+            sed -i "s/&include \/etc\/rsyncd.d//g" /etc/rsyncd.conf
+        fi
 
         mkdir -p /var/log/linuxmuster/cachingserver/
         mkdir -p /etc/dhcp/devices
